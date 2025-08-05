@@ -1,9 +1,11 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  base: '/Conversor-de-Moedas-/',
   plugins: [react()],
-  optimizeDeps: {
-    include: ['chart.js']
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true
   }
-});
+})
