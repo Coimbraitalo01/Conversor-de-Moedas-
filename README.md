@@ -6,7 +6,7 @@ Projeto desenvolvido com **React + Vite + TailwindCSS**, que permite converter v
 
 🔗 [Clique aqui para ver o projeto funcionando](https://coimbraitalo01.github.io/Conversor-de-Moedas-/)
 
-![Preview do projeto](./preview.png)
+![Preview do projeto](https://github.com/Coimbraitalo01/Conversor-de-Moedas-/blob/main/Preview.png?raw=true)
 
 ---
 
