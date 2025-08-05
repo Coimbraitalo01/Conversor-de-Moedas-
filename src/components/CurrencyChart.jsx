@@ -1,35 +1,90 @@
-import React, { useEffect, useState } from 'react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { useEffect, useRef, useState } from 'react';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
-export default function CurrencyChart() {
-  const [data, setData] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function CurrencyChart({ moedaOrigem, moedaDestino }) {
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
+  const [dados, setDados] = useState([]);
+  const [labels, setLabels] = useState([]);
 
   useEffect(() => {
-    fetch(`https://api.exchangerate.host/timeseries?start_date=2024-07-27&end_date=2024-08-03&base=USD&symbols=BRL`)
-      .then(res => res.json())
-      .then(data => {
-        const formatted = Object.entries(data.rates).map(([date, rate]) => ({
-          date,
-          value: rate.BRL
-        }))
-        setData(formatted)
-        setLoading(false)
-      })
-  }, [])
+    if (!moedaOrigem || !moedaDestino) return;
 
-  if (loading) return <p>Carregando gráfico...</p>
+    const fetchData = async () => {
+      const url = `https://api.coingecko.com/api/v3/coins/${moedaOrigem.toLowerCase()}/market_chart?vs_currency=${moedaDestino.toLowerCase()}&days=30`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const cotacoes = data.prices.map((item) => item[1]);
+        const datas = data.prices.map((item) =>
+          new Date(item[0]).toLocaleDateString('pt-BR')
+        );
+
+        setDados(cotacoes);
+        setLabels(datas);
+      } catch (error) {
+        console.error('Erro ao carregar dados do gráfico:', error);
+      }
+    };
+
+    fetchData();
+  }, [moedaOrigem, moedaDestino]);
+
+  useEffect(() => {
+    if (!chartRef.current || dados.length === 0) return;
+
+    const ctx = chartRef.current.getContext('2d');
+
+    if (chartInstance.current) {
+      chartInstance.current.destroy();
+    }
+
+    chartInstance.current = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: `${moedaOrigem} para ${moedaDestino}`,
+            data: dados,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            fill: true,
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `1 ${moedaOrigem} = ${ctx.raw?.toFixed(2)} ${moedaDestino}`
+            }
+          }
+        },
+        scales: {
+          x: { display: true },
+          y: {
+            beginAtZero: false,
+            ticks: { color: '#333' }
+          }
+        }
+      }
+    });
+
+    return () => chartInstance.current?.destroy();
+  }, [dados, labels, moedaOrigem, moedaDestino]);
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg shadow">
-      <ResponsiveContainer width="100%" height={220}>
-        <LineChart data={data}>
-          <XAxis dataKey="date" />
-          <YAxis domain={['auto', 'auto']} />
-          <Tooltip />
-          <Line type="monotone" dataKey="value" stroke="#22d3ee" strokeWidth={2} />
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <h2 className="text-xl font-semibold mb-4 text-blue-600">📉 Histórico de Cotações</h2>
+      <canvas ref={chartRef} className="w-full h-64" />
+      <p className="text-xs text-gray-400 mt-2">Dados fornecidos pela CoinGecko (últimos 30 dias)</p>
     </div>
-  )
+  );
 }
