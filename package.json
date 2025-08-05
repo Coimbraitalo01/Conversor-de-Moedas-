@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "predeploy": "npm run build && rd /s /q node_modules\\.cache\\gh-pages",
+    "predeploy": "npm run build && rm -rf node_modules/.cache/gh-pages || true",
     "deploy": "gh-pages -d dist -b gh-pages -t"
   },
   "dependencies": {
